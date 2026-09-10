@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>max-client</title>
+<meta name="description" content="TUI-клиент MAX в стиле irssi: окна чатов, e2ee по /enc, боты с кнопками, установка одной командой.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Терминальный мир — единая тёмная тема, все цвета заданы явно. */
+  :root {
+    --ground: #101418;
+    --panel: #171C22;
+    --edge: #262E37;
+    --text: #C9D4DC;
+    --dim: #6E7B87;
+    --accent: #8F7BFF;
+    --accent-dim: #4A3F8F;
+    --prompt: #7EE787;
+    --warn: #E0A458;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--text);
+    font: 16px/1.65 "IBM Plex Sans", system-ui, sans-serif;
+    padding-block: 0 64px;
+    padding-inline: 20px;
+  }
+  .wrap { max-width: 760px; margin-inline: auto; }
+  code, .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+  /* Строка статуса — как верхняя панель irssi. */
+  .statusbar {
+    display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px;
+    background: var(--panel);
+    border: 1px solid var(--edge);
+    border-radius: 0 0 6px 6px;
+    border-top: 2px solid var(--accent);
+    padding: 8px 16px;
+    margin-inline: -20px;
+    padding-inline: 20px;
+  }
+  .statusbar .name { color: var(--accent); font-weight: 600; }
+  .statusbar .chips { margin-left: auto; color: var(--dim); }
+  .statusbar .chips b { color: var(--text); font-weight: 500; }
+
+  header.hero { padding-block: 56px 40px; }
+  h1 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: clamp(28px, 6vw, 40px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0 0 12px;
+    text-wrap: balance;
+  }
+  h1 .cursor { color: var(--prompt); animation: blink 1.2s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+  .tagline { font-size: 18px; color: var(--dim); max-width: 58ch; margin: 0; }
+
+  /* Блок установки. */
+  .install {
+    background: var(--panel);
+    border: 1px solid var(--edge);
+    border-radius: 8px;
+    margin-top: 32px;
+    overflow: hidden;
+  }
+  .install .bar {
+    display: flex; align-items: center; gap: 8px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px; color: var(--dim);
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--edge);
+  }
+  .install .bar .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--edge); }
+  .install .bar button {
+    margin-left: auto;
+    font: inherit;
+    color: var(--accent);
+    background: none;
+    border: 1px solid var(--accent-dim);
+    border-radius: 4px;
+    padding: 2px 10px;
+    cursor: pointer;
+  }
+  .install .bar button:hover { background: var(--accent-dim); color: var(--text); }
+  .install .line {
+    display: flex; gap: 10px; align-items: baseline;
+    padding: 16px 14px;
+    overflow-x: auto;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .install .line .ps { color: var(--prompt); user-select: none; }
+  .install .line code { color: var(--text); }
+  .install .note {
+    border-top: 1px solid var(--edge);
+    padding: 10px 14px;
+    font-size: 13px; color: var(--dim);
+  }
+  .install .note code { color: var(--warn); }
+
+  h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 48px 0 16px;
+  }
+  h2::before { content: "# "; color: var(--dim); }
+
+  .features { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; padding: 0; margin: 0; list-style: none; }
+  .features li {
+    background: var(--panel);
+    border: 1px solid var(--edge);
+    border-radius: 6px;
+    padding: 12px 16px;
+  }
+  .features .k { font-family: "IBM Plex Mono", monospace; font-size: 14px; color: var(--accent); }
+  .features .d { font-size: 14px; color: var(--dim); margin-top: 2px; }
+
+  /* Таблица клавиш — как справка в самом клиенте. */
+  table.keys { border-collapse: collapse; width: 100%; font-size: 14px; }
+  table.keys td { padding: 6px 0; border-bottom: 1px solid var(--edge); vertical-align: top; }
+  table.keys td:first-child { font-family: "IBM Plex Mono", monospace; color: var(--text); white-space: nowrap; padding-right: 24px; }
+  table.keys td:last-child { color: var(--dim); }
+  table.keys tr:last-child td { border-bottom: none; }
+
+  p { max-width: 65ch; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  footer {
+    margin-top: 56px; padding-top: 16px;
+    border-top: 1px solid var(--edge);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 13px; color: var(--dim);
+    display: flex; flex-wrap: wrap; gap: 8px 24px;
+  }
+  .lock { color: var(--prompt); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="statusbar" aria-label="статус">
+    <span class="name">max-client</span>
+    <span>· TUI для MAX</span>
+    <span class="chips">[1:<b>служебное</b>] [2:беседа] <span class="lock">🔒 e2ee</span></span>
+  </nav>
+
+  <header class="hero">
+    <h1>MAX в терминале<span class="cursor">▊</span></h1>
+    <p class="tagline">max-client — это чат MAX в вашем шелле: окна бесед в стиле irssi, боты с кнопками, файлы из drag-and-drop и сквозное шифрование по команде <code>/enc</code>.</p>
+
+    <div class="install">
+      <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span>zsh</span><button id="copy" type="button">копировать</button></div>
+      <div class="line"><span class="ps">$</span><code id="cmd">curl -fsSL https://roman-yerin.github.io/max-client-dist/install.sh | bash</code></div>
+      <div class="note">бинарник под вашу ОС и архитектуру ставится в <code>~/.local/bin</code></div>
+    </div>
+  </header>
+
+  <main>
+    <h2>что внутри</h2>
+    <ul class="features">
+      <li><div class="k">окна, как в irssi</div><div class="d">десяток бесед одновременно, Ctrl+1…0, список по Ctrl+L, статус-бар с непрочитанными.</div></li>
+      <li><div class="k">боты с кнопками</div><div class="d">инлайн-клавиатуры рендерятся, /btn N жмёт кнопку через opcode 118, ссылки открываются в браузере.</div></li>
+      <li><div class="k">e2ee — /enc on</div><div class="d">X25519 + AES-256-GCM прямо в чате: рукопожатие текстом, ключи в ~/.max-cli, 🔒 в заголовке окна.</div></li>
+      <li><div class="k">файлы и медиа</div><div class="d">drag-and-drop в терминал отправляет фото/видео, ссылки на медиа резолвятся автоматически.</div></li>
+      <li><div class="k">без рекламы*</div><div class="d">персональный ed25519-ключ отключает HADS-карточки: /key КЛЮЧ — один раз и навсегда.</div></li>
+      <li><div class="k">живёт при обрывах</div><div class="d">сам переподключается с backoff, восстанавливает окна и подписки, ходит через прокси.</div></li>
+    </ul>
+
+    <h2>первые шаги</h2>
+    <table class="keys">
+      <tr><td>max</td><td>запуск; при первом входе — номер телефона и код из SMS</td></tr>
+      <tr><td>/msg +7999…</td><td>открыть диалог по номеру</td></tr>
+      <tr><td>/enc on · /enc off</td><td>включить/выключить шифрование в текущем окне</td></tr>
+      <tr><td>/send /путь</td><td>отправить файл</td></tr>
+      <tr><td>/help</td><td>полная справка</td></tr>
+    </table>
+
+    <h2>сборка</h2>
+    <p>Го, всё локально: <code>go build -o max ./cmd/max</code>. Кросс-сборки и релизы — в <a href="https://github.com/roman-yerin/max-client/actions">GitHub Actions</a>, бинары под darwin/linux (amd64+arm64) прикладываются к каждому тегу <code>v*</code>.</p>
+  </main>
+
+  <footer>
+    <a href="https://github.com/roman-yerin/max-client">github.com/roman-yerin/max-client</a>
+    <span>v0.1.0</span>
+    <span>Go · Bubble Tea · dedugan/vk-max</span>
+  </footer>
+</div>
+<script>
+  document.getElementById('copy').addEventListener('click', async function () {
+    try {
+      await navigator.clipboard.writeText(document.getElementById('cmd').textContent);
+      this.textContent = 'скопировано';
+      setTimeout(() => { this.textContent = 'копировать'; }, 1500);
+    } catch (e) {
+      this.textContent = 'вручную: выделите и ⌘C';
+    }
+  });
+</script>
+</body>
+</html>
