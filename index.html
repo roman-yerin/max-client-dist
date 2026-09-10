@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>max-client</title>
-<meta name="description" content="TUI-клиент MAX в стиле irssi: окна чатов, e2ee по /enc, боты с кнопками, установка одной командой.">
+<meta name="description" content="Мессенджер MAX в терминале: несколько чатов в окнах, шифрование переписки, боты с кнопками, установка одной командой.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
@@ -154,30 +154,30 @@
 
   <nav class="statusbar" aria-label="статус">
     <span class="name">max-client</span>
-    <span>· TUI для MAX</span>
-    <span class="chips">[1:<b>служебное</b>] [2:беседа] <span class="lock">🔒 e2ee</span></span>
+    <span>· MAX в терминале</span>
+    <span class="chips">[1:<b>служебное</b>] [2:беседа] <span class="lock">🔒 шифрование</span></span>
   </nav>
 
   <header class="hero">
     <h1>MAX в терминале<span class="cursor">▊</span></h1>
-    <p class="tagline">max-client — это чат MAX в вашем шелле: окна бесед в стиле irssi, боты с кнопками, файлы из drag-and-drop и сквозное шифрование по команде <code>/enc</code>.</p>
+    <p class="tagline">max-client — это мессенджер MAX прямо в терминале: несколько чатов в окнах, боты с кнопками, отправка файлов и шифрование переписки одной командой <code>/enc</code>.</p>
 
     <div class="install">
       <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span>zsh</span><button id="copy" type="button">копировать</button></div>
       <div class="line"><span class="ps">$</span><code id="cmd">curl -fsSL https://max.bythe.net/install.sh | bash</code></div>
-      <div class="note">бинарник под вашу ОС и архитектуру ставится в <code>~/.local/bin</code></div>
+      <div class="note">скрипт сам выберет версию под ваш компьютер и установит её в <code>~/.local/bin</code></div>
     </div>
   </header>
 
   <main>
     <h2>что внутри</h2>
     <ul class="features">
-      <li><div class="k">окна, как в irssi</div><div class="d">десяток бесед одновременно, Ctrl+1…0, список по Ctrl+L, статус-бар с непрочитанными.</div></li>
-      <li><div class="k">боты с кнопками</div><div class="d">инлайн-клавиатуры рендерятся, /btn N жмёт кнопку через opcode 118, ссылки открываются в браузере.</div></li>
-      <li><div class="k">e2ee — /enc on</div><div class="d">X25519 + AES-256-GCM прямо в чате: рукопожатие текстом, ключи в ~/.max-cli, 🔒 в заголовке окна.</div></li>
-      <li><div class="k">файлы и медиа</div><div class="d">drag-and-drop в терминал отправляет фото/видео, ссылки на медиа резолвятся автоматически.</div></li>
-      <li><div class="k">без рекламы*</div><div class="d">персональный ed25519-ключ отключает HADS-карточки: /key КЛЮЧ — один раз и навсегда.</div></li>
-      <li><div class="k">живёт при обрывах</div><div class="d">сам переподключается с backoff, восстанавливает окна и подписки, ходит через прокси.</div></li>
+      <li><div class="k">много чатов сразу</div><div class="d">каждая беседа в своём окне, переключение по Ctrl+1…0, список чатов по Ctrl+L. Сверху видно, где есть непрочитанные.</div></li>
+      <li><div class="k">боты с кнопками</div><div class="d">кнопки ботов видны прямо в чате, нажать — /btn и номер кнопки. Ссылки открываются в браузере.</div></li>
+      <li><div class="k">шифрование — /enc on</div><div class="d">переписку не прочитает никто, кроме вас и собеседника. Зашифрованный чат отмечен замком 🔒.</div></li>
+      <li><div class="k">файлы и медиа</div><div class="d">перетащите фото или видео в окно терминала — и оно отправится. Присланные картинки открываются по ссылке.</div></li>
+      <li><div class="k">без рекламы</div><div class="d">личный ключ отключает рекламу. Ввести его нужно один раз: /key и сам ключ.</div></li>
+      <li><div class="k">не теряет связь</div><div class="d">если интернет пропал, клиент сам переподключится и вернёт все открытые чаты. Работает и через прокси.</div></li>
     </ul>
 
     <h2>первые шаги</h2>
@@ -185,7 +185,7 @@
       <tr><td>max</td><td>запуск; при первом входе — номер телефона и код из SMS</td></tr>
       <tr><td>/msg +7999…</td><td>открыть диалог по номеру</td></tr>
       <tr><td>/enc on · /enc off</td><td>включить/выключить шифрование в текущем окне</td></tr>
-      <tr><td>/send /путь</td><td>отправить файл</td></tr>
+      <tr><td>/send /путь</td><td>отправить файл с диска</td></tr>
       <tr><td>/help</td><td>полная справка</td></tr>
     </table>
   </main>
