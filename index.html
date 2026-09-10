@@ -80,7 +80,19 @@
     border-bottom: 1px solid var(--edge);
   }
   .install .bar .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--edge); }
-  .install .bar button {
+  .install .bar .tabs { display: flex; gap: 4px; margin-left: 6px; }
+  .install .bar .tab {
+    font: inherit;
+    color: var(--dim);
+    background: none;
+    border: none;
+    border-bottom: 1px solid transparent;
+    padding: 2px 6px;
+    cursor: pointer;
+  }
+  .install .bar .tab:hover { color: var(--text); }
+  .install .bar .tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+  .install .bar #copy {
     margin-left: auto;
     font: inherit;
     color: var(--accent);
@@ -90,7 +102,7 @@
     padding: 2px 10px;
     cursor: pointer;
   }
-  .install .bar button:hover { background: var(--accent-dim); color: var(--text); }
+  .install .bar #copy:hover { background: var(--accent-dim); color: var(--text); }
   .install .line {
     display: flex; gap: 10px; align-items: baseline;
     padding: 16px 14px;
@@ -163,9 +175,16 @@
     <p class="tagline">max-client — это мессенджер MAX прямо в терминале: несколько чатов в окнах, боты с кнопками, отправка файлов и шифрование переписки одной командой <code>/enc</code>.</p>
 
     <div class="install">
-      <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span>zsh</span><button id="copy" type="button">копировать</button></div>
-      <div class="line"><span class="ps">$</span><code id="cmd">curl -fsSL https://max.bythe.net/install.sh | bash</code></div>
-      <div class="note">скрипт сам выберет версию под ваш компьютер и установит её в <code>~/.local/bin</code></div>
+      <div class="bar">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="tabs" role="tablist" aria-label="система">
+          <button class="tab" type="button" role="tab" aria-selected="true" data-os="unix">macOS · Linux</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" data-os="win">Windows</button>
+        </span>
+        <button id="copy" type="button">копировать</button>
+      </div>
+      <div class="line"><span class="ps" id="ps">$</span><code id="cmd">curl -fsSL https://max.bythe.net/install.sh | bash</code></div>
+      <div class="note" id="note">вставьте в Терминал — скрипт сам выберет версию под ваш компьютер и установит её в <code>~/.local/bin</code></div>
     </div>
   </header>
 
@@ -191,12 +210,35 @@
   </main>
 
   <footer>
-    <span>max-client v0.1.0</span>
-    <span>macOS · Linux</span>
+    <span>max-client v0.2.0</span>
+    <span>macOS · Linux · Windows</span>
     <span>amd64 · arm64</span>
   </footer>
 </div>
 <script>
+  const variants = {
+    unix: {
+      ps: '$',
+      cmd: 'curl -fsSL https://max.bythe.net/install.sh | bash',
+      note: 'вставьте в Терминал — скрипт сам выберет версию под ваш компьютер и установит её в <code>~/.local/bin</code>',
+    },
+    win: {
+      ps: 'PS>',
+      cmd: 'irm https://max.bythe.net/install.ps1 | iex',
+      note: 'вставьте в PowerShell — после установки программа запускается командой <code>max</code>. Удобнее всего в Windows Terminal',
+    },
+  };
+  const tabs = document.querySelectorAll('.tab');
+  function pick(os) {
+    const v = variants[os];
+    document.getElementById('ps').textContent = v.ps;
+    document.getElementById('cmd').textContent = v.cmd;
+    document.getElementById('note').innerHTML = v.note;
+    tabs.forEach(t => t.setAttribute('aria-selected', String(t.dataset.os === os)));
+  }
+  tabs.forEach(t => t.addEventListener('click', () => pick(t.dataset.os)));
+  if (/Win/.test(navigator.userAgentData?.platform || navigator.platform || '')) pick('win');
+
   document.getElementById('copy').addEventListener('click', async function () {
     try {
       await navigator.clipboard.writeText(document.getElementById('cmd').textContent);
